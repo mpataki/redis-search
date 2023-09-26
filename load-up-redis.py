@@ -10,6 +10,7 @@ from redis.commands.search.field import (
     VectorField,
 )
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
+from redisconnection import redis
 
 # helpers
 def text_to_embedding(text):
@@ -50,29 +51,9 @@ def create_redis_index(redis, idxname="tweet:idx"):
       definition=indexDefinition
   )
 
-
-
-# CONNECT TO REDIS
-REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
-REDIS_PORT = os.getenv("REDIS_PORT", "6379")
-REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "")
-
-#shortcut for redis-cli $REDIS_CONN command
-if REDIS_PASSWORD!="":
-  os.environ["REDIS_CONN"]=f"-h {REDIS_HOST} -p {REDIS_PORT} -a {REDIS_PASSWORD} --no-auth-warning"
-else:
-  os.environ["REDIS_CONN"]=f"-h {REDIS_HOST} -p {REDIS_PORT}"
-redis = redis.Redis(
-  host=REDIS_HOST,
-  port=REDIS_PORT,
-  password=REDIS_PASSWORD)
-redis.ping()
-
-
 tqdm.pandas()
 
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-
 
 
 # READ DATA 
@@ -83,7 +64,7 @@ df = pd.read_csv('Labelled_Tweets.csv').drop(columns=['created_at','score'])
 df["text_embedding"] = df["full_text"].progress_apply(text_to_embedding)
 # df.head()
 
-redis.flushdb()
+# redis.flushdb()
 
 # create Index
 create_redis_index(redis)
